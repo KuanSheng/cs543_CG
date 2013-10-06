@@ -15,6 +15,7 @@ int direction;
 int flag = 0;
 int Rflag = 0;
 int mflag = 0;
+int nflag = 0;
 int number = 0;
 float xmax ,xmin ,ymax, ymin ,zmax, zmin;
 float movex = 0,movey = 0,movez = 0;
@@ -26,6 +27,8 @@ float ROTATE_Y = 0;
 #define z_positive 5
 #define z_negative 6
 #define Rotate 20
+#define normalL 7
+#define pulse 8
 //GLuint vColor = glGetAttribLocation( program, "vColor" ); 
 // remember to prototype
 void generateGeometry( void );
@@ -267,6 +270,7 @@ void readPLYfile(char *FileName)
 	}
 	printf("%f\t%f\t%f\n",xmax,ymax,zmax);
 	index = 0;
+	number = 0;
 	for(i=0;i<numface;i++){
 		fscanf(plyfile,"%d",&num);
 		if(num != 3)
@@ -281,24 +285,35 @@ void readPLYfile(char *FileName)
 		colors[index] = color4(1.0,0.0,0.0,1.0);
 		points[index] = vertices[three];
 		index++;
+
+
 		temp[0][0]=points[index].x - points[index-1].x;
 		temp[0][1]=points[index].y - points[index-1].y;
 		temp[0][2]=points[index].z - points[index-1].z;
 		temp[1][0]=points[index].x - points[index-2].x;
 		temp[1][1]=points[index].y - points[index-2].y;
 		temp[1][2]=points[index].z - points[index-2].z;
-		normal[i].x = temp[0][1]*temp[1][2]-temp[0][2]*temp[1][1];
+
+        normal[i].x = temp[0][1]*temp[1][2]-temp[0][2]*temp[1][1];
 		normal[i].y = -(temp[0][0]*temp[1][2]-temp[0][2]*temp[1][0]);
 		normal[i].z = temp[0][0]*temp[1][1]-temp[0][1]*temp[1][0];
 
+		float mode = sqrt(normal[i].x*normal[i].x + normal[i].y*normal[i].y + normal[i].z*normal[i].z);
+		 normal[i].x = 5*normal[i].x/mode;
+		 normal[i].y = 5*normal[i].y/mode;
+		 normal[i].z = 5*normal[i].z/mode;
+ 
 		normalvertice[number] = point4((points[index].x+points[index-1].x+points[index-2].x)/3,(points[index].y+points[index-1].y+points[index-2].y)/3,(points[index].z+points[index-1].z+points[index-2].z)/3,1.0);
-		normalcolors[number] = color4(1.0,0.0,0.0,1.0);
+		normalcolors[number] = color4(0.0,0.0,1.0,1.0);
 		number++;
+
 		normalvertice[number] = point4((points[index].x+points[index-1].x+points[index-2].x)/3+normal[i].x,(points[index].y+points[index-1].y+points[index-2].y)/3+normal[i].y,
 			(points[index].z+points[index-1].z+points[index-2].z)/3+normal[i].z,1.0);
-		normalcolors[number] = color4(1.0,0.0,0.0,1.0);
+		normalcolors[number] = color4(0.0,0.0,1.0,1.0);
 		number++;
 	}
+
+
 	printf("%d",index);
 		if( colors[0][0] != 1.0f )
 		{
@@ -397,7 +412,7 @@ void drawMove( void )
 			glutPostRedisplay();
 			break;
 		case Rotate:
-			if(order > 42){
+			if(order > 41){
 				order = 0;
 				Rflag = 0;
 			    mflag = 0;
@@ -419,6 +434,7 @@ void drawMove( void )
 	      display();
 	      glutPostRedisplay();
 			break;
+		
 	}
 }
 void drawNormalLine( void ){
@@ -527,9 +543,11 @@ void display( void )
 	glUniformMatrix4fv( modelMatrix, 1, GL_FALSE, modelMatrixf );
 	GLuint viewMatrix = glGetUniformLocationARB(program, "projection_matrix");
 	glUniformMatrix4fv( viewMatrix, 1, GL_FALSE, viewMatrixf);
-
 	drawfile();
-	 drawNormalLine();
+	if(nflag == 1){
+		drawNormalLine();
+}
+	
     glFlush(); // force output to graphics hardware
 
 	// use this call to double buffer
@@ -634,8 +652,21 @@ void keyboard( unsigned char key, int x, int y )
 		flag = 2;
 		mflag = 1;
 		direction = 20;
-		
 		drawMove();
+        break;
+	case 'm':
+		if(nflag == 0){
+			//glClear(GL_COLOR_BUFFER_BIT);
+			nflag = 1;
+		    display();
+		}
+		else if(nflag ==1){
+			//glClear(GL_COLOR_BUFFER_BIT);
+			nflag = 0;
+			display();
+		}
+		break;
+	case 'B':
 
 		break;
     case 033:
