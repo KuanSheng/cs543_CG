@@ -16,10 +16,14 @@ int flag = 0;
 int Rflag = 0;
 int mflag = 0;
 int nflag = 0;
+int pflag = 0;
+int eflag = 0;
+
 int number = 0;
 float xmax ,xmin ,ymax, ymin ,zmax, zmin;
 float movex = 0,movey = 0,movez = 0;
 float ROTATE_Y = 0;
+float step1;
 #define x_positive 1
 #define x_negative 2
 #define y_positive 3
@@ -29,6 +33,7 @@ float ROTATE_Y = 0;
 #define Rotate 20
 #define normalL 7
 #define pulse 8
+#define cube 9
 //GLuint vColor = glGetAttribLocation( program, "vColor" ); 
 // remember to prototype
 void generateGeometry( void );
@@ -57,7 +62,8 @@ point4 vertices[50000];
 point4 normal[50000];
 point4 normalvertice[50000];
 point4 normalcolors[50000];
-
+point4 normal2[50000];
+point4 cubepoints[30];
 char File[43][20]=
 	{"airplane.ply",
 	"ant.ply",
@@ -116,16 +122,7 @@ char File[43][20]=
     //point4(  0.5, -0.5, -0.5, 1.0 )
 //};
 // RGBA olors
-color4 vertex_colors[8] = {
-    color4( 0.0, 0.0, 0.0, 1.0 ),  // black
-    color4( 1.0, 0.0, 0.0, 1.0 ),  // red
-    color4( 1.0, 1.0, 0.0, 1.0 ),  // yellow
-    color4( 0.0, 1.0, 0.0, 1.0 ),  // green
-    color4( 0.0, 0.0, 1.0, 1.0 ),  // blue
-    color4( 1.0, 0.0, 1.0, 1.0 ),  // magenta
-    color4( 1.0, 1.0, 1.0, 1.0 ),  // white
-    color4( 0.0, 1.0, 1.0, 1.0 )   // cyan
-};
+
 // quad generates two triangles for each face and assigns colors
 //    to the vertices
 //void quad( int a, int b, int c, int d )
@@ -194,6 +191,10 @@ void yRotation( void ){
 	for(i=0;i<index;i++){
 		points[i].x = points[i].x - xPixel;
 		points[i].z = points[i].z - zPixel;
+	}
+	for(i=0;i<number;i++){
+		normalvertice[i].x = normalvertice[i].x - xPixel;
+		normalvertice[i].z = normalvertice[i].z - zPixel;
 	}
 
 }
@@ -298,10 +299,10 @@ void readPLYfile(char *FileName)
 		normal[i].y = -(temp[0][0]*temp[1][2]-temp[0][2]*temp[1][0]);
 		normal[i].z = temp[0][0]*temp[1][1]-temp[0][1]*temp[1][0];
 
-		float mode = sqrt(normal[i].x*normal[i].x + normal[i].y*normal[i].y + normal[i].z*normal[i].z);
-		 normal[i].x = 5*normal[i].x/mode;
-		 normal[i].y = 5*normal[i].y/mode;
-		 normal[i].z = 5*normal[i].z/mode;
+		float mode = sqrt(normal[i].x*normal[i].x + normal[i].y*normal[i].y + normal[i].z*normal[i].z)/20;
+		 normal[i].x = normal[i].x/mode;
+		 normal[i].y = normal[i].y/mode;
+		 normal[i].z = normal[i].z/mode;
  
 		normalvertice[number] = point4((points[index].x+points[index-1].x+points[index-2].x)/3,(points[index].y+points[index-1].y+points[index-2].y)/3,(points[index].z+points[index-1].z+points[index-2].z)/3,1.0);
 		normalcolors[number] = color4(0.0,0.0,1.0,1.0);
@@ -313,6 +314,26 @@ void readPLYfile(char *FileName)
 		number++;
 	}
 
+	int t=0;
+	for(i=0;i<numface;i++){
+		normal2[t] = normal[i];
+		t++;
+		normal2[t] = normal[i];
+		t++;
+		normal2[t] = normal[i];
+		t++;
+ 	}
+
+	if(pflag == 1){
+		float ratio = sqrt(normal2[i].x*normal2[i].x + normal2[i].y*normal2[i].y + normal2[i].z*normal2[i].z)/sqrt((xmax-xmin)*(xmax-xmin)+(ymax-ymin)*(ymax-ymin)+(zmax-zmin)*(zmax-zmin));
+		for(i=0;i<index;i++){
+		    float ratio = sqrt(normal2[i].x*normal2[i].x + normal2[i].y*normal2[i].y + normal2[i].z*normal2[i].z)/sqrt((xmax-xmin)*(xmax-xmin)+(ymax-ymin)*(ymax-ymin)+(zmax-zmin)*(zmax-zmin));
+			points[i].x = points[i].x + 0.01*step1*normal2[i].x/ratio;
+			points[i].y = points[i].y + 0.01*step1*normal2[i].y/ratio;
+			points[i].z = points[i].z + 0.01*step1*normal2[i].z/ratio;
+		}
+		
+	}
 
 	printf("%d",index);
 		if( colors[0][0] != 1.0f )
@@ -350,11 +371,13 @@ void drawCube(void)
 	// that are specifit the themselves
 	// the depth is disabled after the draw 
 	// in case you need to draw overlays
+	
 	glEnable( GL_DEPTH_TEST );
     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
 	glDisable( GL_DEPTH_TEST ); 
 }
 void drawNext(){
+	nflag = 0;
 	if(order < 42)
 	order++;
 	else 
@@ -363,6 +386,7 @@ void drawNext(){
 }
 
 void drawPRE(){
+	nflag = 0;
 	if(order>0)
 		order--;
 	else 
@@ -374,6 +398,7 @@ void drawMove( void )
 {
 	float step;
 	float angle = 5.0;
+	float pulsestep = 0;
 	switch(direction){
 		case x_positive:
 			step = (xmax-xmin)/500;
@@ -434,7 +459,15 @@ void drawMove( void )
 	      display();
 	      glutPostRedisplay();
 			break;
-		
+		case pulse:
+			if(step1 > 100)
+				pulsestep = -1;
+			else if(step1 <= 1)
+				pulsestep = 1;
+			step1 = step1 + pulsestep;
+			display();
+			glutPostRedisplay();
+			break;
 	}
 }
 void drawNormalLine( void ){
@@ -447,6 +480,35 @@ void drawNormalLine( void ){
 	glDisable(GL_DEPTH_TEST);
 
 
+}
+void drawbounding(){
+	
+		cubepoints[0]=point4(xmax,ymax,zmax,1.0);
+		cubepoints[1]=point4(xmax,ymax,zmin,1.0);
+		cubepoints[2]=point4(xmin,ymax,zmin,1.0);
+		cubepoints[3]=point4(xmin,ymax,zmax,1.0);
+		cubepoints[4]=point4(xmax,ymax,zmax,1.0);
+		cubepoints[5]=point4(xmax,ymin,zmax,1.0);
+		cubepoints[6]=point4(xmin,ymin,zmax,1.0);
+		cubepoints[7]=point4(xmin,ymax,zmax,1.0);
+		cubepoints[8]=point4(xmin,ymax,zmin,1.0);
+		cubepoints[9]=point4(xmin,ymin,zmin,1.0);
+		cubepoints[10]=point4(xmin,ymin,zmax,1.0);
+		cubepoints[11]=point4(xmax,ymin,zmax,1.0);
+		cubepoints[12]=point4(xmax,ymin,zmin,1.0);
+		cubepoints[13]=point4(xmin,ymin,zmin,1.0);
+		cubepoints[14]=point4(xmin,ymax,zmin,1.0);
+		cubepoints[15]=point4(xmax,ymax,zmin,1.0);
+		cubepoints[16]=point4(xmax,ymin,zmin,1.0);
+
+
+	 glBufferData( GL_ARRAY_BUFFER, sizeof(cubepoints),
+		  cubepoints, GL_STATIC_DRAW );
+		//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	
+	glEnable( GL_DEPTH_TEST );
+    glDrawArrays( GL_LINE_STRIP, 0, 17 );
+	glDisable( GL_DEPTH_TEST ); 
 }
 
 //void drawRotate( void ){
@@ -547,7 +609,8 @@ void display( void )
 	if(nflag == 1){
 		drawNormalLine();
 }
-	
+	if(eflag == 1)
+	drawbounding();
     glFlush(); // force output to graphics hardware
 
 	// use this call to double buffer
@@ -667,7 +730,20 @@ void keyboard( unsigned char key, int x, int y )
 		}
 		break;
 	case 'B':
-
+		if(pflag == 0)
+		pflag = 1;
+		else if(pflag == 1){
+			pflag = 0;
+		}
+			direction = 8;
+		drawMove();
+		break;
+	case 'e':
+		if(eflag == 0)
+			eflag =1;
+		else if(eflag == 1)
+			eflag = 0;
+		display();
 		break;
     case 033:
         exit( EXIT_SUCCESS );
