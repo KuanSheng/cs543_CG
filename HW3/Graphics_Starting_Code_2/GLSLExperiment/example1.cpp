@@ -19,10 +19,11 @@ int mflag = 0;
 int nflag = 0;
 int pflag = 0;
 int eflag = 0;
-int len;
-int iter;
+int len[5];
+int iter[5];
 int number = 0;
 int numtreenode=0;
+int numgroundpoints=0;
 float xmax[2] ,xmin[2] ,ymax[2], ymin[2] ,zmax[2], zmin[2];
 float movex = 0,movey = 0,movez = 0;
 float scalex,scaley,scalez;
@@ -32,8 +33,8 @@ float pulsestep=1;
 
 float initX,initY,initZ;
 
-char start[50000];
-char F[100];
+char start[5][50000];
+char F[5][100];
 
 #define x_positive 1
 #define x_negative 2
@@ -74,64 +75,25 @@ point4 normal[50000];
 point4 normalvertice[50000];
 point4 normalcolors[50000];
 point4 normal2[50000];
-point4 cubepoints[30];
+point4 groundpoints[1000];
+point4 groundcolors[1000];
 point4 spherepoints[50000];
 point4 spherecolors[50000];
 point4 cylinderpoints[50000];
 point4 cylindercolors[50000];
-point4 rot;
+point4 rot[5];
 point4 currentPosition;
 point4 currentAngle;
 point4 currentDirection;
-char File[45][20]=
-	{
-	"cylinder.ply",
-	"sphere.ply",
-	"airplane.ply",
-	"ant.ply",
-	"apple.ply",
-	"balance.ply",
-	"beethoven.ply",
-	"big_atc.ply",
-	"big_dodge.ply",
-    "big_porsche.ply",
-    "big_spider.ply",
-    "canstick.ply",
-    "chopper.ply",
-    "cow.ply",
-    "dolphins.ply",
-    "egret.ply",
-    "f16.ply",
-    "footbones.ply",
-    "fracttree.ply",
-    "galleon.ply",
-    "hammerhead.ply",
-    "helix.ply",
-    "hind.ply",
-    "kerolamp.ply",
-    "ketchup.ply",
-    "mug.ply",
-    "part.ply",
-    "pickup_big.ply",
-    "pump.ply",
-    "pumpa_tb.ply",
-    "sandal.ply",
-    "saratoga.ply",
-    "scissors.ply",
-    "shark.ply",
-    "steeringweel.ply",
-    "stratocaster.ply",
-    "street_lamp.ply",
-    "teapot.ply",
-    "tennis_shoe.ply",
-    "tommygun.ply",
-    "trashcan.ply",
-    "turbine.ply",
-    "urn2.ply",
-    "walkman.ply",
-    "weathervane.ply"};
 
 
+
+char LFile[5][20]={
+	"lsys1.txt",
+	"lsys2.txt",
+	"lsys3.txt",
+	"lsys4.txt"
+	};
 
 
 void generateGeometry( void )
@@ -171,55 +133,11 @@ void generateGeometry( void )
 	// sets the default color to clear screen
     glClearColor( 1.0, 1.0, 1.0, 1.0 ); // white background
 }
-
-void readLfile(char *FileName){
-	FILE *filestream;
-	int i = 0;
-	char line[256];
-	if((filestream = fopen(FileName,"r") )== NULL)
-		printf("file not exists");
-
-	while(!feof(filestream)){
-		memset(line,0,256);
-		fscanf(filestream,"%s",line);
-
-		if(strcmp(line,"len:") == 0)
-			break;
-	}
-
-   fscanf(filestream,"%d",&len);
-
-   memset(line,0,256);
-   fscanf(filestream,"%s",line);
-
-   fscanf(filestream,"%d",&iter);
-
-   
-   memset(line,0,256);
-   fscanf(filestream,"%s",line);
-
-   fscanf(filestream,"%f %f %f",&rot.x,&rot.y,&rot.z);
-
-   
-   memset(line,0,256);
-   fscanf(filestream,"%s ",line);
-
-   
-   fscanf(filestream,"%c",start);
-
-   memset(line,0,256);
-   fscanf(filestream,"%s",line);
-
-   fscanf(filestream,"%s",F);
-
-  
-   fclose(filestream);
-}
-void do_iteration(int n,char stream[]){
+void do_iteration(int n,char stream[],int order){
 	int count,i=0,j=0,l=0,m=0;
 	char temp[50000];
-	char *head = F;
-	char *head1 = temp;
+	/*char *head = F[];
+	char *head1 = temp;*/
 	for(count=0;count<n;count++){
 		i=0;
 		j=0;
@@ -227,8 +145,8 @@ void do_iteration(int n,char stream[]){
 		while(stream[i] != 0){
 			j=0;
 			if(stream[i] == 'F'){
-				while(F[j]!=NULL){
-					temp[m] = F[j];
+				while(F[order][j]!=NULL){
+					temp[m] = F[order][j];
 					j++;
 					m++;
 				}
@@ -251,6 +169,63 @@ void do_iteration(int n,char stream[]){
 	}
 	
 }
+void iteration(){
+	int i;
+	for(i=0;i<4;i++){
+		do_iteration(iter[i],start[i],i);
+	}
+}
+void readLfile(int order){
+	FILE *filestream;
+	int i = 0;
+	char line[256];
+	if((filestream = fopen(LFile[order],"r") )== NULL)
+		printf("file not exists");
+
+	while(!feof(filestream)){
+		memset(line,0,256);
+		fscanf(filestream,"%s",line);
+
+		if(strcmp(line,"len:") == 0)
+			break;
+	}
+
+   fscanf(filestream,"%d",&len[order]);
+
+   memset(line,0,256);
+   fscanf(filestream,"%s",line);
+
+   fscanf(filestream,"%d",&iter[order]);
+
+   
+   memset(line,0,256);
+   fscanf(filestream,"%s",line);
+
+   fscanf(filestream,"%f %f %f",&rot[order].x,&rot[order].y,&rot[order].z);
+
+   
+   memset(line,0,256);
+   fscanf(filestream,"%s ",line);
+
+   
+   fscanf(filestream,"%c",start[order]);
+
+   memset(line,0,256);
+   fscanf(filestream,"%s",line);
+
+   fscanf(filestream,"%s",F[order]);
+
+  
+   fclose(filestream);
+}
+
+void readdata(){
+	int i;
+	for(i=0;i<4;i++){
+		readLfile(i);
+	}
+}
+
 
 void readCylinder(char *FileName){
 	FILE *plyfile;
@@ -470,7 +445,49 @@ void drawCylinder(){
 	glDrawArrays( GL_TRIANGLES, 0, index1 );
 	glDisable( GL_DEPTH_TEST ); 
 }
+void drawGround(){
+	int i;
+	float x = -250.0;
+	for(i=0;i<100;i++){
+		groundpoints[numgroundpoints] = point4(x,0,-1000,1.0);
+		groundpoints[numgroundpoints] = point4(0,1,0,1);
+		numgroundpoints++;
 
+		groundpoints[numgroundpoints] = point4(x,0,1000,1.0);
+		groundpoints[numgroundpoints] = point4(0,1,0,1);
+		numgroundpoints++;
+		x+=5;
+
+	}
+
+	Angel::mat4 modelMat = Angel::identity();
+	//modelMat = modelMat * Angel::Translate(0.0, 0.0, -2.0f) * Angel::RotateY(45.0f) * Angel::RotateX(35.0f);
+	modelMat = modelMat * Angel::Translate(0,0,0)*Angel::RotateY(0.0f) * Angel::RotateX(0.0f)*Angel::RotateZ(0.0f);
+
+	float modelMatrixf[16];
+	modelMatrixf[0] = modelMat[0][0];modelMatrixf[4] = modelMat[0][1];
+	modelMatrixf[1] = modelMat[1][0];modelMatrixf[5] = modelMat[1][1];
+	modelMatrixf[2] = modelMat[2][0];modelMatrixf[6] = modelMat[2][1];
+	modelMatrixf[3] = modelMat[3][0];modelMatrixf[7] = modelMat[3][1];
+
+	modelMatrixf[8] = modelMat[0][2];modelMatrixf[12] = modelMat[0][3];
+	modelMatrixf[9] = modelMat[1][2];modelMatrixf[13] = modelMat[1][3];
+	modelMatrixf[10] = modelMat[2][2];modelMatrixf[14] = modelMat[2][3];
+	modelMatrixf[11] = modelMat[3][2];modelMatrixf[15] = modelMat[3][3];
+	
+	// set up projection matricies
+	GLuint modelMatrix = glGetUniformLocationARB(program, "model_matrix");
+	glUniformMatrix4fv( modelMatrix, 1, GL_FALSE, modelMatrixf );
+
+ glBufferData( GL_ARRAY_BUFFER, sizeof(groundpoints) + sizeof(groundcolors),
+                  NULL, GL_STATIC_DRAW );
+    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(groundpoints), groundpoints );
+    glBufferSubData( GL_ARRAY_BUFFER, sizeof(groundpoints), sizeof(groundcolors), groundcolors );
+        glEnable(GL_DEPTH_TEST);
+        glDrawArrays(GL_LINES,0,numgroundpoints);
+        glDisable(GL_DEPTH_TEST);
+
+}
 void drawSphere( void )
 {
 	
@@ -557,8 +574,8 @@ void normalize(){
 }
 void InitPoint(){
 	currentPosition.y = -20.0;
-	currentPosition.x = 0.0;
-    currentPosition.z = -rand()%200;
+	currentPosition.x = -rand()%50;
+    currentPosition.z = -rand()%500;
 
 	currentAngle.x = 0.0;
 	currentAngle.y = 0.0;
@@ -576,34 +593,34 @@ void getPoint(){
 	 InitPoint();
 
 }
-void drawtree(){
+void drawtree(int count){
 	int i = 0;
 	InitPoint();
 	stack<point4> treeposition;
 	stack<point4> treeangle;
-	while(start[i] != '\0'){
-		switch(start[i]){
+	while(start[count][i] != '\0'){
+		switch(start[count][i]){
 		case 'F':
 			drawCylinder();
 			drawSphere();
 			break;
 		case '+':
-			currentAngle.x+=rot.x;
+			currentAngle.x+=rot[count].x;
 			break;
 		case '-':
-			currentAngle.x-=rot.x;
+			currentAngle.x-=rot[count].x;
 			break;
 		case '&':
-			currentAngle.y+=rot.y;
+			currentAngle.y+=rot[count].y;
 			break;
 		case '^':
-			currentAngle.y-=rot.y;
+			currentAngle.y-=rot[count].y;
 			break;
 		case '\\':
-			currentAngle.z+=rot.z;
+			currentAngle.z+=rot[count].z;
 			break;
 		case '/':
-			currentAngle.z-=rot.z;
+			currentAngle.z-=rot[count].z;
 			break;
 		case '[':
 			treeposition.push(currentPosition);
@@ -620,7 +637,11 @@ void drawtree(){
 	}
 }
 void drawforest(){
-
+	 drawGround();
+	drawtree(0);
+	drawtree(1);
+	drawtree(2);
+	drawtree(3);
 }
 void drawPRE(){
 	nflag = 0;
@@ -632,7 +653,36 @@ void drawPRE(){
 }
 
 
-
+void keyboard( unsigned char key, int x, int y ){
+	switch(key){
+	case 'a':
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		drawtree(0);
+		display();
+		break;
+	case 'b':
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		drawtree(1);
+		display();
+		break;
+	case 'c':
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		drawtree(2);
+		display();
+		break;
+	case 'd':
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		drawtree(3);
+		display();
+		break;
+	case 'e':
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		drawforest();
+		glFlush(); 
+	glutSwapBuffers();
+		break;
+	}
+}
 void mydisplay(){
 	
 	Angel::mat4 perspectiveMat = Angel::Perspective((GLfloat)60.0, (GLfloat)width/(GLfloat)height, (GLfloat)0.1, (GLfloat) 10000.0);
@@ -675,8 +725,8 @@ void mydisplay(){
 
 void display( void )
 {
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); 
-	 drawtree();
+	/*glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); 
+	 drawtree();*/
         // clear the window
 
 	
@@ -848,13 +898,15 @@ void display( void )
 int main( int argc, char **argv )
 {
 	// init glut
-	readLfile("lsys4.txt");
-	do_iteration(iter,start);
+	/*readLfile("lsys4.txt");
+	do_iteration(iter,start);*/
+	readdata();
+	iteration();
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
     glutInitWindowSize( 512, 512 );
-	width = 512;
-	height = 512;
+	width = 640;
+	height = 640;
     // If you are using freeglut, the next two lines will check if 
     // the code is truly 3.2. Otherwise, comment them out
     
@@ -877,7 +929,7 @@ int main( int argc, char **argv )
 	// assign handlers
     glutDisplayFunc( display );
 	//mydisplay() ;
-  /*  glutKeyboardFunc( keyboard );*/
+ glutKeyboardFunc( keyboard );
 	/*glutIdleFunc(drawMove);*/
 	//glutIdleFunc(drawRotate);
 	// should add menus
