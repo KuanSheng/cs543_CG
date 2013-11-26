@@ -122,13 +122,26 @@ void main()
 	if(r <= rmax){
 	 xy1  = xy - vec2(z*tan(betax),z*tan(betay));
 	}
-	
-	
-
-
 	st = xy1/Res; 
 	irgb = texture( texture, st ).rgb;
     fColor = vec4( irgb, 1. );
+	break;
+
+	case 8:
+	mag = sqrt( h*h + v*v );
+	if(mag > 0.7){
+	fColor = vec4(0.0,0.0,0.0,1.0);
+	}
+	else{
+	         float uQuantize = 6.0;
+			 vec3 color = texture(texture,vST);
+			
+                color.rgb *= uQuantize;
+                color.rgb += vec3( 0.5, 0.5, 0.5 );
+                irgb = ivec3( color.rgb );
+                color.rgb = vec3( irgb ) / uQuantize;
+               fColor= vec4(color,1.0);}
+	
 	break;
 	}
 
