@@ -4,11 +4,13 @@ in  vec2 texCoord;
 in vec2 vST;
 out vec4 fColor;
 
+const float PI = 3.14159265;
 uniform sampler2D texture;
 uniform int textureMode;
 
 void main() 
 { 
+
     ivec2 ires = textureSize(texture, 0);
 	float ResS = float(ires.s);
 	float ResT = float(ires.t);
@@ -19,6 +21,8 @@ void main()
 	vec2 stpm = vec2(1.0/ResS, -1.0/ResT);
 	vec3 irgb = texture(texture,vST).rgb;
 
+	float uD = 45.0;
+	float uR = 0.5;
 	float i00 = dot(texture2D(texture,vST).rgb,LUMCOEFFS );
 	float im1m1 = dot(texture2D(texture,vST-stpp).rgb,LUMCOEFFS );
 	float ip1p1 = dot(texture2D(texture,vST+stpp).rgb,LUMCOEFFS );
@@ -66,8 +70,42 @@ void main()
 	vec4 colorversion = vec4(gray*c00,1.0);
 	fColor = mix(grayversion,colorversion,0.1);
     break;
-	case 5:
 
+	case 5:
+	
+    float Res = float( ires.s ); 
+    vec2 st = vST;
+    float Radius = Res * uR;
+    vec2 xy = Res * st; 
+    vec2 dxy = xy-Res/2.; 
+    float r = length( dxy );
+    float beta = atan( dxy.y, dxy.x) + radians(uD) * (Radius-r)/Radius;
+	vec2 xy1 = xy;
+    if(r <= Radius)
+    {
+       xy1 = Res/2. + r * vec2( 
+       cos(beta), sin(beta) );
+    }
+    st = xy1/Res; 
+    irgb = texture( texture, st ).rgb;
+    fColor = vec4( irgb, 1. );
+	break;
+
+	case 6:
+    Res = float( ires.s );
+	 st = vST;
+	 xy = Res * st; 
+    float beta1 = 2*PI*xy.y/120.0;
+	float beta2 = 2*PI*xy.x/250.0;
+	 xy1 = xy + vec2(10*sin(beta1),15*sin(beta2));
+
+	st = xy1/Res; 
+	irgb = texture( texture, st ).rgb;
+    fColor = vec4( irgb, 1. );
+	break;
+
+	case 7:
+	
 	break;
 	}
 
