@@ -1,0 +1,80 @@
+import java.util.Stack;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
+import ij.plugin.filter.PlugInFilter;
+import ij.process.ImageProcessor;
+
+public class region_labeling implements PlugInFilter {
+
+	ImagePlus im;
+	Node[] centroid;
+	Node temp;
+	static int nmax = 0;	//points to show
+    int width;
+    int height;
+    public int setup(String arg, ImagePlus im) {
+    	this.im = im;
+        return DOES_ALL;
+    }
+    public void floodfilling(ImageProcessor ip, int x, int y, int label){
+    	
+    	width = ip.getWidth();
+    	height = ip.getHeight();
+    	Stack<Node> s = new Stack<Node>();
+    	s.push(new Node(x,y));
+    	int xtotal = 0;
+    	int ytotal = 0;
+    	int count = 0;
+    	
+    	while(!s.isEmpty()){
+    		Node n = s.pop();
+    		if ((n.x>=0) && (n.x<width) && (n.y>=0) && (n.y<height) && ip.getPixel(n.x,n.y)==0){
+    			ip.putPixel(n.x,n.y,label);
+    			xtotal = xtotal + n.x;
+    			ytotal = ytotal + n.y;
+    			count++;
+    			s.push(new Node(n.x+1,n.y));
+    			s.push(new Node(n.x,n.y+1));
+    			s.push(new Node(n.x,n.y-1));
+    			s.push(new Node(n.x-1,n.y));
+    		}
+    		
+    	}
+    	
+    	temp = new Node(xtotal/count,ytotal/count);
+    	
+    }
+    
+    public void getellipse(ImageProcessor ip){
+    	width = ip.getWidth();
+    	height = ip.getHeight();
+    	
+    } 
+    
+    public void run(ImageProcessor ip) {
+    	width = ip.getWidth();
+    	height = ip.getHeight();
+    	int label = 50;
+    	int index = 0;
+    	for(int i = 0; i < width; i++)
+    		for(int j = 0;j < height; j++){
+    			System.out.println("fuck");
+    			if(ip.getPixel(i, j) == 0){
+    				
+    				floodfilling(ip,i,j,label);
+    				//centroid[index] = temp;
+    				label= label+10;
+    				//index++;
+    			}
+    		 
+    			
+    		}
+    		
+    		
+    	}
+    
+	
+}
+
